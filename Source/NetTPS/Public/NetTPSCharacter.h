@@ -1,4 +1,4 @@
-// Copyright Epic Games, Inc. All Rights Reserved.
+ï»¿// Copyright Epic Games, Inc. All Rights Reserved.
 
 #pragma once
 
@@ -20,7 +20,7 @@ class ANetTPSCharacter : public ACharacter
 {
 	GENERATED_BODY()
 
-	// ÃÑÀ» ÀÚ½ÄÀ¸·Î ºÙÀÏ ÄÄÆ÷³ÍÆ®
+	// ì´ì„ ìì‹ìœ¼ë¡œ ë¶™ì¼ ì»´í¬ë„ŒíŠ¸
 	UPROPERTY(VisibleAnywhere)
 	class USceneComponent* GunComp;
 
@@ -52,61 +52,61 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Input)
 	UInputAction* TakePistolAction;
 
-	// ÇÊ¿ä¼Ó¼º : ÃÑ ¼ÒÀ¯¿©ºÎ
+	// í•„ìš”ì†ì„± : ì´ ì†Œìœ  ì—¬ë¶€
 	bool bHasPistol = false;
 
-	// ¼ÒÀ¯ÁßÀÎ ÃÑ
+	// ì†Œìœ ì¤‘ì¸ ì´
 	UPROPERTY()
 	AActor* ownedPistol = nullptr;
 
-	// ÃÑ °Ë»ö ¹üÀ§
+	// ì´ ê²€ìƒ‰ ë²”ìœ„
 	UPROPERTY(EditAnywhere, Category = Gun)
 	float DistanceToGun = 200.0f;
 
-	// ¿ùµå¿¡ ¹èÄ¡µÈ ÃÑµé
+	// ì›”ë“œì— ë°°ì¹˜ëœ ì´ë“¤
 	UPROPERTY()
 	TArray<AActor*> pistolActors;
 
 
 	void TakePistol(const FInputActionValue& Value);
 
-	// ÃÑÀ» ÄÄÆ÷³ÍÆ®¿¡ ºÙÀÌ±â
+	// ì´ì„ ì»´í¬ë„ŒíŠ¸ì— ë¶™ì´ê¸°
 	void AttachPistol(AActor* pistolActor);
 
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Input)
 	UInputAction* ReleaseAction;
 
-	// ÃÑ ³õ±âÀÔ·Â Ã³¸® ÇÔ¼ö
+	// ì´ ë†“ê¸° ì…ë ¥ì²˜ë¦¬ í•¨ìˆ˜
 	void ReleasePistol(const FInputActionValue& Value);
 
-	// ÃÑÀ» ÄÄÆ÷³ÍÆ®¿¡¼­ ºĞ¸®
+	// ì´ì„ ì»´í¬ë„ŒíŠ¸ì—ì„œ ë¶„ë¦¬
 	void DetachPistol(AActor* pistolActor);
 
 
 
-	// ÃÑ ½î±â ÀÔ·Â¾×¼Ç
+	// ì´ì˜ê¸° ì…ë ¥ì•¡ì…˜
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Input)
 	UInputAction* FireAction;
 
-	// ÃÑ ½î±â Ã³¸® ÇÔ¼ö
+	// ì´ì˜ê¸° ì²˜ë¦¬í•¨ìˆ˜
 	void Fire(const FInputActionValue& Value);
 
-	// ÇÇ°İ ÆÄÆ¼Å¬
+	// í”¼ê²© íŒŒí‹°í´
 	UPROPERTY(EditDefaultsOnly, Category = Gun)
 	class UParticleSystem* GunEffect;
 
 
 
-	// »ç¿ëÇÒ À§Á¬ Å¬·¡½º
+	// ì‚¬ìš©í•  ìœ„ì ¯í´ë˜ìŠ¤
 	UPROPERTY(EditDefaultsOnly, Category = UI)
 	TSubclassOf<class UMainUI> mainUIWidget;
 
-	// mainUIWidgetÀ¸·Î ºÎÅÍ ¸¸µé¾îÁø ÀÎ½ºÅÏ½º
+	// mainUIWidget ìœ¼ë¡œ ë¶€í„° ë§Œë“¤ì–´ì§„ ì¸ìŠ¤í„´ìŠ¤
 	UPROPERTY()
 	class UMainUI* mainUI;
 
-	// UI ÃÊ±âÈ­ ÇÔ¼ö
+	// UI ì´ˆê¸°í™” í•¨ìˆ˜
 	void InitUIWidget();
 
 

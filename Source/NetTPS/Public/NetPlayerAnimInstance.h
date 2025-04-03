@@ -1,4 +1,4 @@
-// Fill out your copyright notice in the Description page of Project Settings.
+ï»¿// Fill out your copyright notice in the Description page of Project Settings.
 
 #pragma once
 
@@ -27,15 +27,15 @@ public:
 	UPROPERTY()
 	class ANetTPSCharacter* player;
 
-	// ÃÑ½î±â¿¡ »ç¿ëÇÒ ¸ùÅ¸ÁÖ
+	// ì´ì˜ê¸°ì—ì„œ ì‚¬ìš©í•  ëª½íƒ€ì£¼
 	UPROPERTY(EditDefaultsOnly, Category = Anim)
 	class UAnimMontage* FireMontage;
 
-	// ÃÑ½î±â ¾Ö´Ï¸ŞÀÌ¼Ç Àç»ı
+	// ì´ì˜ê¸° ì• ë‹ˆë©”ì´ì…˜ ì¬ìƒ
 	void PlayFireAnimation();
 
 
-	// È¸Àü°ª ±â¾ïº¯¼ö
+	// íšŒì „ê°’ ê¸°ì–µë³€ìˆ˜
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = MyAnimSettings)
 	float pitchAngle;
 

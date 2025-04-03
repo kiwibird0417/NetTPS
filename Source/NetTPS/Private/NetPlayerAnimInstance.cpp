@@ -1,4 +1,4 @@
-// Fill out your copyright notice in the Description page of Project Settings.
+ï»¿// Fill out your copyright notice in the Description page of Project Settings.
 
 
 #include "NetPlayerAnimInstance.h"
@@ -22,12 +22,12 @@ void UNetPlayerAnimInstance::NativeUpdateAnimation(float DeltaSeconds)
 
 		direction = FVector::DotProduct(player->GetVelocity(), player->GetActorRightVector());
 
-		// È¸Àü°ª Àû¿ë
+		// íšŒì „ê°’ ì ìš©
 		pitchAngle = -player->GetBaseAimRotation().GetNormalized().Pitch;
 		pitchAngle = FMathf::Clamp(pitchAngle, -60.0f, 60.0f);
 
 
-		// ÃÑ¼ÒÀ¯ ¿©ºÎ Àû¿ë
+		// ì´ì†Œìœ  ì—¬ë¶€ ì ìš©
 		bHasPistol = player->bHasPistol;
 	}
 }

@@ -1,4 +1,4 @@
-// Fill out your copyright notice in the Description page of Project Settings.
+﻿// Fill out your copyright notice in the Description page of Project Settings.
 
 #pragma once
 
@@ -18,6 +18,6 @@ public:
 	UPROPERTY(BlueprintReadWrite, Category = UI, meta=(BindWidget))
 	class UImage*	img_Crosshair;
 	
-	// ũ�ν���� on/off ó��
+	// 크로스헤어 보일지여부 처리
 	void ShowCrosshair(bool isShow);
 };

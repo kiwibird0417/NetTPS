@@ -1,4 +1,4 @@
-// Copyright Epic Games, Inc. All Rights Reserved.
+ï»¿// Copyright Epic Games, Inc. All Rights Reserved.
 
 #include "NetTPSCharacter.h"
 #include "Engine/LocalPlayer.h"
@@ -71,7 +71,7 @@ void ANetTPSCharacter::BeginPlay()
 
 	InitUIWidget();
 
-	// ÃÑ °Ë»ö
+	// ì´ ê²€ìƒ‰
 	TArray<AActor*> allActors;
 	UGameplayStatics::GetAllActorsOfClass(GetWorld(), AActor::StaticClass(), allActors);
 	for( auto tempPistol : allActors )
@@ -102,44 +102,44 @@ void ANetTPSCharacter::NotifyControllerChanged()
 
 void ANetTPSCharacter::TakePistol(const FInputActionValue& Value)
 {
-	// ÃÑÀ» ¼ÒÀ¯ÇÏÁö ¾Ê´Ù¸é ÀÏÁ¤ ¹üÀ§ ¾È¿¡ ÀÖ´Â ÃÑÀ» Àâ´Â´Ù.
+	// ì´ì„ ì†Œìœ í•˜ê³  ìˆì§€ ì•Šë‹¤ë©´ ì¼ì •ë²”ìœ„ ì•ˆì— ìˆëŠ” ì´ì„ ì¡ëŠ”ë‹¤.
 
-	// ÇÊ¿ä¼Ó¼º : ÃÑÀ» ¼ÒÀ¯ÇÏ°í ÀÖ´ÂÁö, ¼ÒÀ¯ÁßÀÎ ÃÑ, ÃÑÀ» ÀâÀ» ¼ö ÀÖ´Â ¹üÀ§
+	// í•„ìš”ì†ì„± : ì´ì†Œìœ ì—¬ë¶€, ì†Œìœ ì¤‘ì¸ ì´, ì´ ê²€ìƒ‰ë²”ìœ„
 
-	// 1. ÃÑÀ» Àâ°í ÀÖÁö ¾Ê´Ù¸é
+	// 1. ì´ì„ ì¡ê³  ìˆì§€ ì•Šë‹¤ë©´
 	if( bHasPistol == true )
 	{
 		return;
 	}
 
-	// 2. ¿ùµå¿¡ ÀÖ´Â ÃÑÀ» ¸ğµÎ Ã£´Â´Ù.
+	// 2. ì›”ë“œì— ìˆëŠ” ì´ì„ ëª¨ë‘ ì¡°ì‚¬í•œë‹¤
 	for( auto pistolActor : pistolActors )
 	{
-		// 3. ÃÑÀÇ ÁÖÀÎÀÌ ÀÖ´Ù¸é ±× ÃÑÀº °Ë»çÇÏÁö ¾Ê´Â´Ù.
+		// 3. ë§Œì•½ ì´ì˜ ì†Œìœ ìê°€ ìˆë‹¤ë©´ ê²€ì‚¬í•˜ì§€ ì•ŠëŠ”ë‹¤.
 		if( pistolActor->GetOwner() != nullptr )
 		{
 			continue;
 		}
 
-		// 4. ÃÑ°úÀÇ °Å¸®¸¦ ±¸ÇÑ´Ù.
+		// 4. ì´ê³¼ì˜ ê±°ë¦¬ë¥¼ êµ¬í•œë‹¤.
 		float Distance = FVector::Dist(GetActorLocation(), pistolActor->GetActorLocation());
 
-		// 5. ÃÑÀÌ ¹üÀ§ ¾È¿¡ ÀÖ´Ù¸é
+		// 5. ê±°ë¦¬ê°€ ë²”ìœ„ ì•ˆì— ìˆë‹¤ë©´
 		if( Distance > DistanceToGun )
 		{
 			continue;
 		}
 
-		// 6. ¼ÒÀ¯ÁßÀÎ ÃÑÀ¸·Î µî·Ï
+		// 6. ì†Œìœ ì¤‘ì¸ ì´ìœ¼ë¡œ ë“±ë¡
 		ownedPistol = pistolActor;
 
-		// 7. ÃÑÀÇ ¼ÒÀ¯ÀÚ¸¦ ÀÚ½ÅÀ¸·Î µî·Ï
+		// 7. ì´ì˜ ì†Œìœ ìë¥¼ ìì‹ ìœ¼ë¡œ ë“±ë¡
 		ownedPistol->SetOwner(this);
 
-		// 8. ÃÑ ¼ÒÀ¯ »óÅÂ¸¦ º¯°æ	
+		// 8. ì´ ì†Œìœ  ìƒíƒœë¡œ ë³€ê²½
 		bHasPistol = true;
 
-		// ÃÑ ºÙÀÌ±â
+		// ì´ ë¶™ì´ê¸°
 		AttachPistol(pistolActor);
 
 		break;
@@ -157,19 +157,19 @@ void ANetTPSCharacter::AttachPistol(AActor* pistolActor)
 
 void ANetTPSCharacter::ReleasePistol(const FInputActionValue& Value)
 {
-	// ÃÑÀ» ÀâÁö ¾Ê¾ÒÀ»¶§´Â Ã³¸®ÇÏÁö ¾Ê´Â´Ù.
+	// ì´ì„ ì¡ê³  ìˆì§€ ì•Šë‹¤ë©´ ì²˜ë¦¬í•˜ì§€ ì•ŠëŠ”ë‹¤
 	if(bHasPistol == false)
 	{
 		return;
 	}
 
-	// ÃÑ ¼ÒÀ¯½Ã
+	// ì´ ì†Œìœ ì‹œ
 	if( ownedPistol )
 	{
-		// ÃÑºĞ¸®
+		// ì´ë¶„ë¦¬
 		DetachPistol(ownedPistol);
 
-		// ¹Ì¼ÒÀ¯·Î ¼³Á¤
+		// ë¯¸ì†Œìœ ë¡œ ì„¤ì •
 		bHasPistol = false;
 		ownedPistol->SetOwner(nullptr);
 		ownedPistol = nullptr;
@@ -188,17 +188,17 @@ void ANetTPSCharacter::DetachPistol(AActor* pistolActor)
 
 void ANetTPSCharacter::Fire(const FInputActionValue& Value)
 {
-	// ÃÑÀ» µé°í ÀÖÁö ¾ÊÀ»¶§´Â Ã³¸®ÇÏÁö ¾Ê´Â´Ù.
+	// ì´ì„ ë“¤ê³  ìˆì§€ ì•Šë‹¤ë©´ ì²˜ë¦¬í•˜ì§€ ì•ŠëŠ”ë‹¤.
 	if( !bHasPistol )
 	{
 		return;
 	}
 
-	//ÃÑ½î±â ¾Ö´Ï¸ŞÀÌ¼Ç Àç»ı
+	// ì´ì˜ê¸° ì• ë‹ˆë©”ì´ì…˜ ì¬ìƒ
 	auto anim = Cast<UNetPlayerAnimInstance>(GetMesh()->GetAnimInstance());
 	anim->PlayFireAnimation();
 
-	// ÃÑ½î±â
+	// ì´ì˜ê¸°
 	FHitResult hitInfo;
 	FVector startPos = FollowCamera->GetComponentLocation();
 	FVector endPos = startPos + FollowCamera->GetForwardVector() * 10000.0f;
@@ -209,7 +209,7 @@ void ANetTPSCharacter::Fire(const FInputActionValue& Value)
 
 	if( bHit )
 	{
-		// ¸Â´Â ºÎÀ§¿¡ ÆÄÆ¼Å¬Ç¥½Ã
+		// ë§ì€ ë¶€ìœ„ì— íŒŒí‹°í´ í‘œì‹œ
 		UGameplayStatics::SpawnEmitterAtLocation(GetWorld(), GunEffect, hitInfo.Location, FRotator(), true);
 	}
 
