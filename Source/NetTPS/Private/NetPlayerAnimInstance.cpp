@@ -3,6 +3,7 @@
 
 #include "NetPlayerAnimInstance.h"
 #include "NetTPSCharacter.h"
+#include "MathUtil.h"
 
 void UNetPlayerAnimInstance::NativeInitializeAnimation()
 {
@@ -20,5 +21,23 @@ void UNetPlayerAnimInstance::NativeUpdateAnimation(float DeltaSeconds)
 		speed = FVector::DotProduct(player->GetVelocity(), player->GetActorForwardVector());
 
 		direction = FVector::DotProduct(player->GetVelocity(), player->GetActorRightVector());
+
+		// 회전값 적용
+		pitchAngle = -player->GetBaseAimRotation().GetNormalized().Pitch;
+		pitchAngle = FMathf::Clamp(pitchAngle, -60.0f, 60.0f);
+
+
+		// 총소유 여부 적용
+		bHasPistol = player->bHasPistol;
 	}
 }
+
+void UNetPlayerAnimInstance::PlayFireAnimation()
+{
+	if( bHasPistol && FireMontage )
+	{
+		Montage_Play(FireMontage);
+	}
+}
+
+

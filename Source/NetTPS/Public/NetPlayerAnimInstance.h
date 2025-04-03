@@ -27,6 +27,22 @@ public:
 	UPROPERTY()
 	class ANetTPSCharacter* player;
 
+	// 총쏘기에 사용할 몽타주
+	UPROPERTY(EditDefaultsOnly, Category = Anim)
+	class UAnimMontage* FireMontage;
+
+	// 총쏘기 애니메이션 재생
+	void PlayFireAnimation();
+
+
+	// 회전값 기억변수
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = MyAnimSettings)
+	float pitchAngle;
+
+
+
+
+
 public:
 	virtual void NativeInitializeAnimation() override;
 	virtual void NativeUpdateAnimation( float DeltaSeconds ) override;

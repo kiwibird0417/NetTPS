@@ -10,6 +10,9 @@
 #include "EnhancedInputComponent.h"
 #include "EnhancedInputSubsystems.h"
 #include "InputActionValue.h"
+#include "Kismet/GameplayStatics.h"
+#include "NetPlayerAnimInstance.h"
+#include "MainUI.h"
 
 DEFINE_LOG_CATEGORY(LogTemplateCharacter);
 
@@ -54,6 +57,30 @@ ANetTPSCharacter::ANetTPSCharacter()
 
 	// Note: The skeletal mesh and anim blueprint references on the Mesh component (inherited from Character) 
 	// are set in the derived blueprint asset named ThirdPersonCharacter (to avoid direct content references in C++)
+
+
+	GunComp = CreateDefaultSubobject<USceneComponent>(TEXT("GunComp"));
+	GunComp->SetupAttachment(GetMesh(), TEXT("GunPosition"));	
+
+
+}
+
+void ANetTPSCharacter::BeginPlay()
+{
+	Super::BeginPlay();
+
+	InitUIWidget();
+
+	// 총 검색
+	TArray<AActor*> allActors;
+	UGameplayStatics::GetAllActorsOfClass(GetWorld(), AActor::StaticClass(), allActors);
+	for( auto tempPistol : allActors )
+	{
+		if( tempPistol->GetName().Contains("BP_Pistol") )
+		{
+			pistolActors.Add(tempPistol);
+		}
+	}
 }
 
 //////////////////////////////////////////////////////////////////////////
@@ -73,6 +100,135 @@ void ANetTPSCharacter::NotifyControllerChanged()
 	}
 }
 
+void ANetTPSCharacter::TakePistol(const FInputActionValue& Value)
+{
+	// 총을 소유하지 않다면 일정 범위 안에 있는 총을 잡는다.
+
+	// 필요속성 : 총을 소유하고 있는지, 소유중인 총, 총을 잡을 수 있는 범위
+
+	// 1. 총을 잡고 있지 않다면
+	if( bHasPistol == true )
+	{
+		return;
+	}
+
+	// 2. 월드에 있는 총을 모두 찾는다.
+	for( auto pistolActor : pistolActors )
+	{
+		// 3. 총의 주인이 있다면 그 총은 검사하지 않는다.
+		if( pistolActor->GetOwner() != nullptr )
+		{
+			continue;
+		}
+
+		// 4. 총과의 거리를 구한다.
+		float Distance = FVector::Dist(GetActorLocation(), pistolActor->GetActorLocation());
+
+		// 5. 총이 범위 안에 있다면
+		if( Distance > DistanceToGun )
+		{
+			continue;
+		}
+
+		// 6. 소유중인 총으로 등록
+		ownedPistol = pistolActor;
+
+		// 7. 총의 소유자를 자신으로 등록
+		ownedPistol->SetOwner(this);
+
+		// 8. 총 소유 상태를 변경	
+		bHasPistol = true;
+
+		// 총 붙이기
+		AttachPistol(pistolActor);
+
+		break;
+	}
+}
+
+void ANetTPSCharacter::AttachPistol(AActor* pistolActor)
+{
+	auto meshComp = pistolActor->GetComponentByClass<UStaticMeshComponent>();
+	meshComp->SetSimulatePhysics(false);
+	meshComp->AttachToComponent(GunComp, FAttachmentTransformRules::SnapToTargetNotIncludingScale);
+
+	mainUI->ShowCrosshair(true);
+}
+
+void ANetTPSCharacter::ReleasePistol(const FInputActionValue& Value)
+{
+	// 총을 잡지 않았을때는 처리하지 않는다.
+	if(bHasPistol == false)
+	{
+		return;
+	}
+
+	// 총 소유시
+	if( ownedPistol )
+	{
+		// 총분리
+		DetachPistol(ownedPistol);
+
+		// 미소유로 설정
+		bHasPistol = false;
+		ownedPistol->SetOwner(nullptr);
+		ownedPistol = nullptr;
+	}
+
+}
+
+void ANetTPSCharacter::DetachPistol(AActor* pistolActor)
+{
+	auto meshComp = pistolActor->GetComponentByClass<UStaticMeshComponent>();
+	meshComp->SetSimulatePhysics(true);
+	meshComp->DetachFromComponent(FDetachmentTransformRules::KeepRelativeTransform);
+
+	mainUI->ShowCrosshair(false);
+}
+
+void ANetTPSCharacter::Fire(const FInputActionValue& Value)
+{
+	// 총을 들고 있지 않을때는 처리하지 않는다.
+	if( !bHasPistol )
+	{
+		return;
+	}
+
+	//총쏘기 애니메이션 재생
+	auto anim = Cast<UNetPlayerAnimInstance>(GetMesh()->GetAnimInstance());
+	anim->PlayFireAnimation();
+
+	// 총쏘기
+	FHitResult hitInfo;
+	FVector startPos = FollowCamera->GetComponentLocation();
+	FVector endPos = startPos + FollowCamera->GetForwardVector() * 10000.0f;
+	FCollisionQueryParams params;
+	params.AddIgnoredActor(this);
+
+	bool bHit = GetWorld()->LineTraceSingleByChannel(hitInfo, startPos, endPos, ECollisionChannel::ECC_Visibility, params);
+
+	if( bHit )
+	{
+		// 맞는 부위에 파티클표시
+		UGameplayStatics::SpawnEmitterAtLocation(GetWorld(), GunEffect, hitInfo.Location, FRotator(), true);
+	}
+
+
+
+}
+
+void ANetTPSCharacter::InitUIWidget()
+{
+	if( mainUIWidget )
+	{
+		mainUI = Cast<UMainUI>(CreateWidget(GetWorld(), mainUIWidget));
+		mainUI->AddToViewport();
+		mainUI->ShowCrosshair(false);
+	}
+}
+
+
+
 void ANetTPSCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)
 {
 	// Set up action bindings
@@ -87,6 +243,12 @@ void ANetTPSCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCom
 
 		// Looking
 		EnhancedInputComponent->BindAction(LookAction, ETriggerEvent::Triggered, this, &ANetTPSCharacter::Look);
+
+		EnhancedInputComponent->BindAction(TakePistolAction, ETriggerEvent::Started, this, &ANetTPSCharacter::TakePistol);
+
+		EnhancedInputComponent->BindAction(ReleaseAction, ETriggerEvent::Started, this, &ANetTPSCharacter::ReleasePistol);
+
+		EnhancedInputComponent->BindAction(FireAction, ETriggerEvent::Started, this, &ANetTPSCharacter::Fire);
 	}
 	else
 	{
