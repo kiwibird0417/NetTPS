@@ -29,6 +29,8 @@ void UNetPlayerAnimInstance::NativeUpdateAnimation(float DeltaSeconds)
 
 		// 총소유 여부 적용
 		bHasPistol = player->bHasPistol;
+		// 사망 여부 적용
+		isDead = player->isDead;
 	}
 }
 
@@ -39,5 +41,19 @@ void UNetPlayerAnimInstance::PlayFireAnimation()
 		Montage_Play(FireMontage);
 	}
 }
+
+void UNetPlayerAnimInstance::PlayReloadAnimation()
+{
+	if( bHasPistol && ReloadMontage )
+	{
+		Montage_Play(ReloadMontage);
+	}
+}
+
+void UNetPlayerAnimInstance::AnimNotify_OnReloadFinish()
+{
+	player->InitAmmoUI();
+}
+
 
 

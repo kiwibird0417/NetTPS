@@ -13,6 +13,10 @@ UCLASS()
 class NETTPS_API UNetPlayerAnimInstance : public UAnimInstance
 {
 	GENERATED_BODY()
+
+public:
+	virtual void NativeInitializeAnimation() override;
+	virtual void NativeUpdateAnimation(float DeltaSeconds) override;
 	
 public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "MyAnimSettings")
@@ -40,10 +44,21 @@ public:
 	float pitchAngle;
 
 
+	// 재장전 몽타주
+	UPROPERTY(EditDefaultsOnly, Category = Anim)
+	class UAnimMontage* ReloadMontage;
+
+	// 재장전 애니메이션 재생
+	void PlayReloadAnimation();
+
+	// 재장전 애니메이션 노티파이이벤트
+	UFUNCTION()
+	void AnimNotify_OnReloadFinish();
+
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = MyAnimSettings)
+	bool isDead = false;
 
 
 
-public:
-	virtual void NativeInitializeAnimation() override;
-	virtual void NativeUpdateAnimation( float DeltaSeconds ) override;
 };
