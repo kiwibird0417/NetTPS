@@ -15,6 +15,7 @@
 #include "MainUI.h"
 #include "Components/WidgetComponent.h"
 #include "HealthBar.h"
+#include "NetTPS.h"
 
 DEFINE_LOG_CATEGORY(LogTemplateCharacter);
 
@@ -23,6 +24,8 @@ DEFINE_LOG_CATEGORY(LogTemplateCharacter);
 
 ANetTPSCharacter::ANetTPSCharacter()
 {
+	PrimaryActorTick.bCanEverTick = true;
+
 	// Set size for collision capsule
 	GetCapsuleComponent()->InitCapsuleSize(42.f, 96.0f);
 		
@@ -325,6 +328,34 @@ void ANetTPSCharacter::DamageProcess()
 }
 
 
+
+void ANetTPSCharacter::Tick(float DeltaSeconds)
+{
+	Super::Tick(DeltaSeconds);
+
+	PrintNetLog();
+}
+
+void ANetTPSCharacter::PrintNetLog()
+{
+	const FString conStr = GetNetConnection() != nullptr ? TEXT("Valid Connection") : TEXT("Invalid Connection");
+
+	const FString ownerName = GetOwner() != nullptr ? GetOwner()->GetName() : TEXT("No Owner");
+
+	const FString logStr = FString::Printf(TEXT("Connection : %s\nOwner Name : %s\nLocal Role : %s\nRemote Role : %s"), *conStr, *ownerName, *LOCAL_ROLE, *REMOTE_ROLE);
+
+	DrawDebugString(GetWorld(), GetActorLocation() + FVector::UpVector * 100.0f, logStr, nullptr, FColor::White, 0, true, 1);
+
+	// 권한(Authority)
+	// ROLE_Authority : 모든 권한을 다 가지고 있다. ( 로직 실행 가능 )
+	// HasAuthority()
+	
+	// ROLE_AutonomouseProxy : 제어(Input)만 가능
+	// IsLocallyControlled()
+
+	// ROLE_SimulatedProxy : 시뮬레이션만 가능
+
+}
 
 void ANetTPSCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)
 {
