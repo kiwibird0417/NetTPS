@@ -16,6 +16,7 @@
 #include "Components/WidgetComponent.h"
 #include "HealthBar.h"
 #include "NetTPS.h"
+#include "Net/UnrealNetwork.h"
 
 DEFINE_LOG_CATEGORY(LogTemplateCharacter);
 
@@ -120,38 +121,8 @@ void ANetTPSCharacter::TakePistol(const FInputActionValue& Value)
 		return;
 	}
 
-	// 2. 월드에 있는 총을 모두 조사한다
-	for( auto pistolActor : pistolActors )
-	{
-		// 3. 만약 총의 소유자가 있다면 검사하지 않는다.
-		if( pistolActor->GetOwner() != nullptr )
-		{
-			continue;
-		}
-
-		// 4. 총과의 거리를 구한다.
-		float Distance = FVector::Dist(GetActorLocation(), pistolActor->GetActorLocation());
-
-		// 5. 거리가 범위 안에 있다면
-		if( Distance > DistanceToGun )
-		{
-			continue;
-		}
-
-		// 6. 소유중인 총으로 등록
-		ownedPistol = pistolActor;
-
-		// 7. 총의 소유자를 자신으로 등록
-		ownedPistol->SetOwner(this);
-
-		// 8. 총 소유 상태로 변경
-		bHasPistol = true;
-
-		// 총 붙이기
-		AttachPistol(pistolActor);
-
-		break;
-	}
+	// 클라이언트에서 서버로 요청 ( 여기는 클라 )
+	ServerRPC_TakePistol();	
 }
 
 void ANetTPSCharacter::AttachPistol(AActor* pistolActor)
@@ -160,7 +131,10 @@ void ANetTPSCharacter::AttachPistol(AActor* pistolActor)
 	meshComp->SetSimulatePhysics(false);
 	meshComp->AttachToComponent(GunComp, FAttachmentTransformRules::SnapToTargetNotIncludingScale);
 
-	mainUI->ShowCrosshair(true);
+	if( IsLocallyControlled() && mainUI )
+	{
+		mainUI->ShowCrosshair(true);
+	}	
 }
 
 void ANetTPSCharacter::ReleasePistol(const FInputActionValue& Value)
@@ -171,18 +145,7 @@ void ANetTPSCharacter::ReleasePistol(const FInputActionValue& Value)
 		return;
 	}
 
-	// 총 소유시
-	if( ownedPistol )
-	{
-		// 총분리
-		DetachPistol(ownedPistol);
-
-		// 미소유로 설정
-		bHasPistol = false;
-		ownedPistol->SetOwner(nullptr);
-		ownedPistol = nullptr;
-	}
-
+	ServerRPC_ReleasePistol();	
 }
 
 void ANetTPSCharacter::DetachPistol(AActor* pistolActor)
@@ -191,7 +154,10 @@ void ANetTPSCharacter::DetachPistol(AActor* pistolActor)
 	meshComp->SetSimulatePhysics(true);
 	meshComp->DetachFromComponent(FDetachmentTransformRules::KeepRelativeTransform);
 
-	mainUI->ShowCrosshair(false);
+	if( IsLocallyControlled() && mainUI )
+	{
+		mainUI->ShowCrosshair(false);
+	}	
 }
 
 void ANetTPSCharacter::Fire(const FInputActionValue& Value)
@@ -386,6 +352,71 @@ void ANetTPSCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCom
 	}
 }
 
+void ANetTPSCharacter::ServerRPC_TakePistol_Implementation()
+{
+	// 클라에서 요청받은 총잡기를 처리한다 ( 여기는 서버 )
+	
+	// 2. 월드에 있는 총을 모두 조사한다
+	for( auto pistolActor : pistolActors )
+	{
+		// 3. 만약 총의 소유자가 있다면 검사하지 않는다.
+		if( pistolActor->GetOwner() != nullptr )
+		{
+			continue;
+		}
+
+		// 4. 총과의 거리를 구한다.
+		float Distance = FVector::Dist(GetActorLocation(), pistolActor->GetActorLocation());
+
+		// 5. 거리가 범위 안에 있다면
+		if( Distance > DistanceToGun )
+		{
+			continue;
+		}
+
+		// 6. 소유중인 총으로 등록
+		ownedPistol = pistolActor;
+
+		// 7. 총의 소유자를 자신으로 등록
+		ownedPistol->SetOwner(this);
+
+		// 8. 총 소유 상태로 변경
+		bHasPistol = true;
+
+		// 총을 잡으라고 클라에 요청 ( 여기는 서버 )
+		MulticastRPC_TakePistol(pistolActor);		
+
+		break;
+	}
+}
+
+void ANetTPSCharacter::MulticastRPC_TakePistol_Implementation(AActor* pistolActor)
+{
+	// 서버에서 인자로 넘어온 총 액터를 붙이자 ( 여기는 클라 )
+	// 총 붙이기
+	AttachPistol(pistolActor);
+}
+
+void ANetTPSCharacter::ServerRPC_ReleasePistol_Implementation()
+{
+	// 총 소유시
+	if( ownedPistol )
+	{
+		MulticastRPC_ReleasePistol(ownedPistol);		
+
+		// 미소유로 설정
+		bHasPistol = false;
+		ownedPistol->SetOwner(nullptr);
+		ownedPistol = nullptr;
+	}
+}
+
+void ANetTPSCharacter::MulticastRPC_ReleasePistol_Implementation(AActor* pistolActor)
+{
+	// 총분리
+	DetachPistol(pistolActor);
+}
+
 void ANetTPSCharacter::Move(const FInputActionValue& Value)
 {
 	// input is a Vector2D
@@ -420,4 +451,11 @@ void ANetTPSCharacter::Look(const FInputActionValue& Value)
 		AddControllerYawInput(LookAxisVector.X);
 		AddControllerPitchInput(LookAxisVector.Y);
 	}
+}
+
+void ANetTPSCharacter::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
+{
+	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
+
+	DOREPLIFETIME(ANetTPSCharacter, bHasPistol);	
 }

@@ -53,6 +53,7 @@ public:
 	UInputAction* TakePistolAction;
 
 	// 필요속성 : 총 소유 여부
+	UPROPERTY(Replicated)
 	bool bHasPistol = false;
 
 	// 소유중인 총
@@ -190,5 +191,24 @@ public:
 	FORCEINLINE class USpringArmComponent* GetCameraBoom() const { return CameraBoom; }
 	/** Returns FollowCamera subobject **/
 	FORCEINLINE class UCameraComponent* GetFollowCamera() const { return FollowCamera; }
+
+
+
+	// ----------------- Multiplayer 요소들 ------------------
+public:
+	// 총잡기 RPC
+	UFUNCTION(Server, Reliable)
+	void ServerRPC_TakePistol();
+	UFUNCTION(NetMulticast, Reliable)
+	void MulticastRPC_TakePistol(AActor* pistolActor);
+
+	// 총놓기 RPC
+	UFUNCTION(Server, Reliable)
+	void ServerRPC_ReleasePistol();
+	UFUNCTION(NetMulticast, Reliable)
+	void MulticastRPC_ReleasePistol(AActor* pistolActor);
+
+
+
 };
 
