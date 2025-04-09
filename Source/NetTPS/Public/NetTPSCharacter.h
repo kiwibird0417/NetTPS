@@ -116,6 +116,7 @@ public:
 	int32 MaxBulletCount = 10;
 
 	// 남은 총알개수
+	UPROPERTY(Replicated)
 	int32 BulletCount = MaxBulletCount;
 
 
@@ -138,8 +139,11 @@ public:
 	float MaxHP = 3;
 
 	// 현재 체력
-	UPROPERTY(BlueprintReadOnly, Category = HP)
+	UPROPERTY(ReplicatedUsing=OnRep_HP, BlueprintReadOnly, Category = HP)
 	float hp = MaxHP;
+
+	UFUNCTION()
+	void OnRep_HP();
 
 	__declspec(property(get = GetHP, put = SetHP)) float HP;
 	float GetHP();
@@ -207,6 +211,27 @@ public:
 	void ServerRPC_ReleasePistol();
 	UFUNCTION(NetMulticast, Reliable)
 	void MulticastRPC_ReleasePistol(AActor* pistolActor);
+
+// -------------------------------------------------------------------------------------
+//0409 (수)
+	// 총쏘기 RPC
+	UFUNCTION(Server, Reliable)
+	void ServerRPC_Fire();
+
+	UFUNCTION(NetMulticast, Unreliable)
+	void MulticastRPC_Fire(bool bHit, const FHitResult& hitInfo);
+
+	//----------------------------------------------------------
+	//재장전 RPC
+	UFUNCTION(Server, Reliable)
+	void ServerRPC_Reload();
+
+
+	// 재장전의 경우, Multi로 모두에게 보일 정보 X
+	// 나 자신만 알면 되기 때문에, Client로 구현  --> 이건 기획에 따라 다름.
+	UFUNCTION(Client, Unreliable)
+	void ClientRPC_Reload();
+
 
 
 

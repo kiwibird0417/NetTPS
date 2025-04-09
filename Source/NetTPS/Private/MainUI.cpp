@@ -35,3 +35,8 @@ void UMainUI::RemoveAllAmmo()
 		BulletPanel->RemoveChild(bulletWidget);
 	}
 }
+
+void UMainUI::PlayDamageAnimation()
+{
+	PlayAnimation(DamageAnim);
+}

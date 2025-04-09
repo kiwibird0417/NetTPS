@@ -92,6 +92,8 @@ void ANetTPSCharacter::BeginPlay()
 	}
 }
 
+
+
 //////////////////////////////////////////////////////////////////////////
 // Input
 
@@ -168,37 +170,7 @@ void ANetTPSCharacter::Fire(const FInputActionValue& Value)
 		return;
 	}
 
-	// 총알제거
-	BulletCount--;
-	mainUI->PopBullet(BulletCount);
-
-	// 총쏘기 애니메이션 재생
-	auto anim = Cast<UNetPlayerAnimInstance>(GetMesh()->GetAnimInstance());
-	anim->PlayFireAnimation();
-
-	// 총쏘기
-	FHitResult hitInfo;
-	FVector startPos = FollowCamera->GetComponentLocation();
-	FVector endPos = startPos + FollowCamera->GetForwardVector() * 10000.0f;
-	FCollisionQueryParams params;
-	params.AddIgnoredActor(this);
-
-	bool bHit = GetWorld()->LineTraceSingleByChannel(hitInfo, startPos, endPos, ECollisionChannel::ECC_Visibility, params);
-
-	if( bHit )
-	{
-		// 맞은 부위에 파티클 표시
-		UGameplayStatics::SpawnEmitterAtLocation(GetWorld(), GunEffect, hitInfo.Location, FRotator(), true);
-
-		// 맞은 대상이 상대방일 경우 데미지 처리
-		auto otherPlayer = Cast<ANetTPSCharacter>(hitInfo.GetActor());
-		if( otherPlayer )
-		{
-			otherPlayer->DamageProcess();
-		}
-	}
-
-
+	ServerRPC_Fire();
 
 }
 
@@ -223,6 +195,11 @@ void ANetTPSCharacter::InitUIWidget()
 		{
 			mainUI->AddBullet();
 		}
+
+		// mainUI 가 있기 때문에 해당 컴포넌트는 비활성화
+		if (hpUIComp) {
+			hpUIComp->SetVisibility(false);
+		}
 	}
 }
 
@@ -244,18 +221,26 @@ void ANetTPSCharacter::ReloadPistol(const FInputActionValue& Value)
 
 void ANetTPSCharacter::InitAmmoUI()
 {
-	// 총알 개수 초기화
-	BulletCount = MaxBulletCount;
-	// 총알 UI 제거
-	mainUI->RemoveAllAmmo();
-	// 총알 UI 다시 세팅
-	for( int i = 0; i < MaxBulletCount; ++i )
-	{
-		mainUI->AddBullet();
-	}
+	ServerRPC_Reload();
+}
 
-	// 재장전 완료상태로 처리
-	IsReloading = false;
+void ANetTPSCharacter::OnRep_HP()
+{
+	// UI에 할당할 퍼센트 계산
+	float percent = hp / MaxHP;
+
+	if (mainUI)
+	{
+		mainUI->HP = percent;
+
+		// 피격 효과 처리
+		mainUI->PlayDamageAnimation();
+	}
+	else
+	{
+		auto hpUI = Cast<UHealthBar>(hpUIComp->GetWidget());
+		hpUI->HP = percent;
+	}
 }
 
 float ANetTPSCharacter::GetHP()
@@ -266,19 +251,7 @@ float ANetTPSCharacter::GetHP()
 void ANetTPSCharacter::SetHP(float value)
 {
 	hp = value;
-
-	// UI에 할당할 퍼센트 계산
-	float percent = hp / MaxHP;
-
-	if( mainUI )
-	{
-		mainUI->HP = percent;
-	}
-	else
-	{
-		auto hpUI = Cast<UHealthBar>(hpUIComp->GetWidget());
-		hpUI->HP = percent;
-	}
+	OnRep_HP();
 }
 
 void ANetTPSCharacter::DamageProcess()
@@ -299,7 +272,22 @@ void ANetTPSCharacter::Tick(float DeltaSeconds)
 {
 	Super::Tick(DeltaSeconds);
 
+	//---------------------
+	// HP Bar 빌보드
+	if (hpUIComp && hpUIComp->GetVisibleFlag()) {
+		FVector CamLoc = UGameplayStatics::GetPlayerCameraManager(GetWorld(), 0)->GetCameraLocation();
+
+		FVector Direction = CamLoc - hpUIComp->GetComponentLocation();
+		Direction.Z = 0.0f;
+
+		hpUIComp->SetWorldRotation(Direction.GetSafeNormal().ToOrientationRotator());
+	}
+
+
+
+	//---------------------
 	PrintNetLog();
+
 }
 
 void ANetTPSCharacter::PrintNetLog()
@@ -417,6 +405,78 @@ void ANetTPSCharacter::MulticastRPC_ReleasePistol_Implementation(AActor* pistolA
 	DetachPistol(pistolActor);
 }
 
+//-----------------------------------------------------------------------------------------
+// 총쏘기
+void ANetTPSCharacter::ServerRPC_Fire_Implementation()
+{
+	// 총알제거
+	BulletCount--;
+
+	// 총쏘기
+	FHitResult hitInfo;
+	FVector startPos = FollowCamera->GetComponentLocation();
+	FVector endPos = startPos + FollowCamera->GetForwardVector() * 10000.0f;
+	FCollisionQueryParams params;
+	params.AddIgnoredActor(this);
+
+	bool bHit = GetWorld()->LineTraceSingleByChannel(hitInfo, startPos, endPos, ECollisionChannel::ECC_Visibility, params);
+
+	if (bHit)
+	{
+		// 맞은 대상이 상대방일 경우 데미지 처리
+		auto otherPlayer = Cast<ANetTPSCharacter>(hitInfo.GetActor());
+		if (otherPlayer)
+		{
+			otherPlayer->DamageProcess();
+		}
+	}
+
+	MulticastRPC_Fire(bHit, hitInfo);
+}
+
+void ANetTPSCharacter::MulticastRPC_Fire_Implementation(bool bHit, const FHitResult& hitInfo)
+{
+	if (mainUI) {
+		mainUI->PopBullet(BulletCount);
+	}
+
+	// 총쏘기 애니메이션 재생
+	auto anim = Cast<UNetPlayerAnimInstance>(GetMesh()->GetAnimInstance());
+	anim->PlayFireAnimation();
+
+	if (bHit) {
+		// 맞은 부위에 파티클 표시
+		UGameplayStatics::SpawnEmitterAtLocation(GetWorld(), GunEffect, hitInfo.Location, FRotator(), true);
+	}
+
+}
+
+void ANetTPSCharacter::ServerRPC_Reload_Implementation()
+{
+	// 총알 개수 초기화
+	BulletCount = MaxBulletCount;
+
+	ClientRPC_Reload();
+}
+
+void ANetTPSCharacter::ClientRPC_Reload_Implementation()
+{
+	// 총알 UI 제거
+	if (mainUI) {
+		mainUI->RemoveAllAmmo();
+
+		// 총알 UI 다시 세팅
+		for (int i = 0; i < MaxBulletCount; ++i)
+		{
+			mainUI->AddBullet();
+		}
+	}
+
+	// 재장전 완료상태로 처리
+	IsReloading = false;
+}
+
+//-----------------------------------------------------------------------------------------
 void ANetTPSCharacter::Move(const FInputActionValue& Value)
 {
 	// input is a Vector2D
@@ -458,4 +518,7 @@ void ANetTPSCharacter::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& Out
 	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
 
 	DOREPLIFETIME(ANetTPSCharacter, bHasPistol);	
+	DOREPLIFETIME(ANetTPSCharacter, BulletCount);
+	DOREPLIFETIME(ANetTPSCharacter, hp);
+
 }
