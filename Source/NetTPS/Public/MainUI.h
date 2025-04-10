@@ -14,6 +14,11 @@ class NETTPS_API UMainUI : public UUserWidget
 {
 	GENERATED_BODY()
 
+//-----------------------------------------------------------------------------
+public:
+	virtual void NativeConstruct() override;
+
+//-----------------------------------------------------------------------------
 public:
 	UPROPERTY(BlueprintReadWrite, Category = UI, meta=(BindWidget))
 	class UImage*	img_Crosshair;
@@ -52,6 +57,24 @@ public:
 	// 피격 처리 애니메이션 재생
 	void PlayDamageAnimation();
 
+//-----------------------------------------------------------------------
+//0410(목)
+	// 플레이어 사망 시 UI
+	UPROPERTY(BlueprintReadWrite, meta = (BindWidget))
+	class UHorizontalBox* GameoverUI;
+
+	UPROPERTY(BlueprintReadWrite, meta = (BindWidget))
+	class UButton* btn_retry;
+
+	UPROPERTY(BlueprintReadWrite, meta = (BindWidget))
+	class UButton* btn_exit;
+
+public:
+	UFUNCTION()
+	void OnRetryButtonClicked();
+
+	UFUNCTION()
+	void OnExitButtonClicked();
 
 
 

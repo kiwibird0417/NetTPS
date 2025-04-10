@@ -17,6 +17,10 @@
 #include "HealthBar.h"
 #include "NetTPS.h"
 #include "Net/UnrealNetwork.h"
+#include "Camera/CameraShakeBase.h"
+#include "Components/HorizontalBox.h"
+#include "NetPlayerController.h"
+
 
 DEFINE_LOG_CATEGORY(LogTemplateCharacter);
 
@@ -78,8 +82,13 @@ void ANetTPSCharacter::BeginPlay()
 {
 	Super::BeginPlay();
 
-	InitUIWidget();
+	// 만약 여기서 안 된다면!
+	// Possessed 쪽 함수에서 불리도록 설정함.
+	if (IsLocallyControlled() && HasAuthority() == false) {
+		InitUIWidget();
+	}
 
+	//---------------------------------------------------
 	// 총 검색
 	TArray<AActor*> allActors;
 	UGameplayStatics::GetAllActorsOfClass(GetWorld(), AActor::StaticClass(), allActors);
@@ -142,7 +151,7 @@ void ANetTPSCharacter::AttachPistol(AActor* pistolActor)
 void ANetTPSCharacter::ReleasePistol(const FInputActionValue& Value)
 {
 	// 총을 잡고 있지 않거나 재장전 중이라면 처리하지 않는다
-	if(bHasPistol == false || IsReloading )
+	if(bHasPistol == false || IsReloading || IsLocallyControlled() == false)
 	{
 		return;
 	}
@@ -176,21 +185,45 @@ void ANetTPSCharacter::Fire(const FInputActionValue& Value)
 
 void ANetTPSCharacter::InitUIWidget()
 {
+
+	// 컨트롤러가 있는 로컬 플레이어라면 Player
+	// 없으면 Not Player
+	PRINTLOG(TEXT("[%s] Begin"), Controller ? TEXT("PLAYER") : TEXT("Not Player"));
+
+
+	//---------------------------------------------------------
 	// Player가 제어중이 아니라면 처리하지 않는다.
-	auto pc = Cast<APlayerController>(Controller);
+	auto pc = Cast<ANetPlayerController>(Controller);
 	if( pc == nullptr )
 	{
 		return;
 	}
 
-	if( mainUIWidget )
+	if( pc->mainUIWidget )
 	{
-		mainUI = Cast<UMainUI>(CreateWidget(GetWorld(), mainUIWidget));
+		if (pc->mainUI == nullptr) {
+			pc->mainUI = Cast<UMainUI>(CreateWidget(GetWorld(), pc->mainUIWidget));
+		}
+
+		mainUI = pc->mainUI;
+		
 		mainUI->AddToViewport();
 		mainUI->ShowCrosshair(false);
 
-		BulletCount = MaxBulletCount;
+		//================================================================
+		// 다시 리스폰될 때, 최대 체력으로 다시 초기화
+		// 리스폰 고려한 게임에서는 중요.
+		hp = MaxHP;
+		mainUI->HP = 1.0f;
+
+		// 총알 모두 제거(Reload)
+		mainUI->RemoveAllAmmo();
+
+		//================================================================
 		// 총알추가
+		BulletCount = MaxBulletCount;
+
+
 		for( int i = 0; i < MaxBulletCount; ++i )
 		{
 			mainUI->AddBullet();
@@ -203,6 +236,25 @@ void ANetTPSCharacter::InitUIWidget()
 	}
 }
 
+//============================================================================
+// 이 함수는 서버에서만 호출된다.
+void ANetTPSCharacter::PossessedBy(AController* NewController)
+{
+	PRINTLOG(TEXT("Begin"));
+
+	Super::PossessedBy(NewController);
+
+	// BeginPlay에서 InitUI 가 안 되었으면, 무조건 될 수 있도록...
+	if (IsLocallyControlled()) {
+		InitUIWidget();
+	}
+
+	PRINTLOG(TEXT("End"));
+
+
+}
+
+//============================================================================
 void ANetTPSCharacter::ReloadPistol(const FInputActionValue& Value)
 {
 	// 총 소지중이 아니거나 재장전 중이라면 아무 처리하지 않는다.
@@ -226,6 +278,21 @@ void ANetTPSCharacter::InitAmmoUI()
 
 void ANetTPSCharacter::OnRep_HP()
 {
+
+	// 사망처리
+	if (HP <= 0)
+	{
+		isDead = true;
+		ReleasePistol(FInputActionValue());
+
+		// 충돌체 없애주기
+		GetCapsuleComponent()->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+		GetMesh()->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+		GetCharacterMovement()->DisableMovement();
+	}
+
+	//===============================================
+
 	// UI에 할당할 퍼센트 계산
 	float percent = hp / MaxHP;
 
@@ -235,6 +302,13 @@ void ANetTPSCharacter::OnRep_HP()
 
 		// 피격 효과 처리
 		mainUI->PlayDamageAnimation();
+
+		// 0410(목)
+		// 카메라 셰이크 효과 재생
+		if (damageCameraShake) {
+			auto pc = Cast<APlayerController>(Controller);
+			pc->ClientStartCameraShake(damageCameraShake);
+		}
 	}
 	else
 	{
@@ -259,15 +333,25 @@ void ANetTPSCharacter::DamageProcess()
 	// 체력을 감소시킨다.
 	HP--;
 
-	// 사망처리
-	if( HP <= 0 )
-	{
-		isDead = true;
-	}
 }
 
 
+// 죽음 처리
+void ANetTPSCharacter::DieProcess()
+{	
+	auto pc = Cast<APlayerController>(Controller);
+	pc->SetShowMouseCursor(true);
+	GetFollowCamera()->PostProcessSettings.ColorSaturation = FVector4(0.0f, 0.0f, 0.0f, 1.0f);
 
+	// Die UI 표시
+	if (mainUI) {
+		mainUI->GameoverUI->SetVisibility(ESlateVisibility::Visible);
+	}
+
+
+}
+
+//============================================================================
 void ANetTPSCharacter::Tick(float DeltaSeconds)
 {
 	Super::Tick(DeltaSeconds);
@@ -475,6 +559,7 @@ void ANetTPSCharacter::ClientRPC_Reload_Implementation()
 	// 재장전 완료상태로 처리
 	IsReloading = false;
 }
+
 
 //-----------------------------------------------------------------------------------------
 void ANetTPSCharacter::Move(const FInputActionValue& Value)

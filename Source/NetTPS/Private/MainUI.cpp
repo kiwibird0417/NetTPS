@@ -4,7 +4,31 @@
 #include "MainUI.h"
 #include "Components/Image.h"
 #include "Components/UniformGridPanel.h"
+#include "Components/Button.h"
+#include "Components/HorizontalBox.h"
+#include "Kismet/KismetSystemLibrary.h"
+#include "NetPlayerController.h"
 
+void UMainUI::NativeConstruct()
+{
+	Super::NativeConstruct();
+
+	// 1-1. 상호작용 버튼 연결
+	if (btn_retry)
+	{
+		btn_retry->OnClicked.AddDynamic(this, &UMainUI::OnRetryButtonClicked);
+	}
+
+	//----------------------------------------------------------
+	// 1-2. 플레이어 인벤토리 버튼 연결
+	if (btn_exit)
+	{
+		btn_exit->OnClicked.AddDynamic(this, &UMainUI::OnExitButtonClicked);
+	}
+
+}
+
+//------------------------------------------------------------------------------------
 void UMainUI::ShowCrosshair(bool isShow)
 {
 	if( isShow )
@@ -40,3 +64,25 @@ void UMainUI::PlayDamageAnimation()
 {
 	PlayAnimation(DamageAnim);
 }
+
+void UMainUI::OnRetryButtonClicked()
+{
+	// 게임 종료 UI 안 보이도록 처리
+	GameoverUI->SetVisibility(ESlateVisibility::Hidden);
+
+	// 리스폰
+	auto pc = Cast<ANetPlayerController>(GetWorld()->GetFirstPlayerController());
+	if (pc) {
+		// 마우스 커서 안 보이도록 처리
+		pc->SetShowMouseCursor(false);
+
+		// 리스폰 요청
+		pc->ServerRPC_RespawnPlayer();
+	}
+}
+
+void UMainUI::OnExitButtonClicked()
+{
+
+}
+

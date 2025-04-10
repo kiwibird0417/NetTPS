@@ -60,5 +60,9 @@ public:
 	bool isDead = false;
 
 
+	UFUNCTION()
+	void AnimNotify_DieEnd();
+
+
 
 };
