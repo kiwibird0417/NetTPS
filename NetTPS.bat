@@ -1,1 +1,1 @@
-"C:\Program Files\Epic Games\UE_5.5\Engine\Binaries\Win64\UnrealEditor.exe" D:\UnrealProjects\March\NetTPS\NetTPS.uproject "BattleMap" -game -ResX=600 -ResY=400 -WInX=0 -WinY=100 -log -WINDOWED
+"C:\Program Files\Epic Games\UE_5.5\Engine\Binaries\Win64\UnrealEditor.exe" D:\UnrealProjects\March\NetTPS\NetTPS.uproject -game -ResX=600 -ResY=400 -WInX=0 -WinY=100 -log -WINDOWED
