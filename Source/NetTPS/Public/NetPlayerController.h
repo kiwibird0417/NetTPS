@@ -35,5 +35,12 @@ public:
 	UPROPERTY()
 	class UMainUI* mainUI;
 
+//-------------------------------------------------------
+//0411(금)
+// 플레이어가 죽은 후에, 다른 플레이어가 영혼이나 아이템 등 볼 수 있는 형태 만들기
+
+	UFUNCTION(Server, Reliable)
+	void ServerRPC_ChangeToSpectator();
+
 	
 };

@@ -73,11 +73,17 @@ void UMainUI::OnRetryButtonClicked()
 	// 리스폰
 	auto pc = Cast<ANetPlayerController>(GetWorld()->GetFirstPlayerController());
 	if (pc) {
+		
 		// 마우스 커서 안 보이도록 처리
 		pc->SetShowMouseCursor(false);
 
 		// 리스폰 요청
-		pc->ServerRPC_RespawnPlayer();
+		//pc->ServerRPC_RespawnPlayer();
+
+		//-------------------------------------------------------------
+		// 0411(금)
+		// 관전자 생성
+		pc->ServerRPC_ChangeToSpectator();
 	}
 }
 
