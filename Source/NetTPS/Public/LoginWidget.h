@@ -46,6 +46,31 @@ public:
 
 
 //===========================================================
+//0416(수)
+	UPROPERTY(BlueprintReadOnly, meta = (BindWidget))
+	class UWidgetSwitcher* WidgetSwitcher;
+
+	UPROPERTY(BlueprintReadOnly, meta = (BindWidget))
+	class UButton* btn_createSession;
+
+	UPROPERTY(BlueprintReadOnly, meta = (BindWidget))
+	class UButton* btn_findSession;
 
 
+	UFUNCTION()
+	void SwitchCreatePanel();
+
+	UFUNCTION()
+	void SwitchFindPanel();
+	//===========================================================
+	// 메인화면 돌아가기 버튼
+	UPROPERTY(BlueprintReadOnly, meta = (BindWidget))
+	class UButton* btn_back;
+
+	UPROPERTY(BlueprintReadOnly, meta = (BindWidget))
+	class UButton* btn_back_1;
+	
+
+	UFUNCTION()
+	void BacktoMain();
 };
