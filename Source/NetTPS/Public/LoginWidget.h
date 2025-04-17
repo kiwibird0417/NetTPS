@@ -73,4 +73,27 @@ public:
 
 	UFUNCTION()
 	void BacktoMain();
+
+//===============================================================================
+//0417(목)
+	// 세션 슬롯
+	// Canvas_FindRoom의 스크롤 박스 위젯
+	UPROPERTY(BlueprintReadOnly, meta=(BindWIdget))
+	class UScrollBox* scroll_roomList;
+
+	UPROPERTY(EditDefaultsOnly)
+	TSubclassOf<class USessionWidget> sessionInfoWidget;
+
+	UFUNCTION()
+	void AddSlotWidget(const struct FSessionInfo& sessionInfo);
+
+	// 방 검색 버튼
+	UPROPERTY(BlueprintReadOnly, meta=(BindWidget))
+	class UButton* btn_find;
+
+	// 방찾기 버튼 클릭시 호출될 콜백
+	UFUNCTION()
+	void OnClickedFindSession();
+
+
 };

@@ -40,16 +40,16 @@ void UNetGameInstance::Init()
 		//);
 	
 		// Session 검색
-		FTimerHandle handle;
-		GetWorld()->GetTimerManager().SetTimer(
-			handle,
-			FTimerDelegate::CreateLambda([&] 
-				{
-					FindOtherSession();
-				}
-			), 
-			2.0f, false
-		);	
+		//FTimerHandle handle;
+		//GetWorld()->GetTimerManager().SetTimer(
+		//	handle,
+		//	FTimerDelegate::CreateLambda([&] 
+		//		{
+		//			FindOtherSession();
+		//		}
+		//	), 
+		//	2.0f, false
+		//);	
 	
 	
 	}
@@ -179,6 +179,11 @@ void UNetGameInstance::OnFindSessionsComplete(bool bWasSuccessful)
 
 
 		PRINTLOG(TEXT("%s"), *sessionInfo.ToString());
+
+		//--------------------------------------------------------------------
+		//0417(목)
+		//델리게이트로 위젯에 알려주기
+		onSearchCompleted.Broadcast(sessionInfo);
 
 	}
 

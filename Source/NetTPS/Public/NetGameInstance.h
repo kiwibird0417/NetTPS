@@ -5,6 +5,7 @@
 #include "CoreMinimal.h"
 #include "Engine/GameInstance.h"
 #include "../../../../Plugins/Online/OnlineSubsystem/Source/Public/Interfaces/OnlineSessionInterface.h"
+#include "Delegates/DelegateCombinations.h"
 #include "NetGameInstance.generated.h"
 
 USTRUCT(BlueprintType) 
@@ -39,6 +40,10 @@ struct FSessionInfo
 		);
 	}
 };
+
+// 세션 검색 끝났을 때 호출될 델리게이트
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FSearchSignature, const FSessionInfo&, sessionInfo);
+
 
 /**
  * 
@@ -80,6 +85,10 @@ public:
 
 
 //=======================================================
+//0417(목)
+	// 방찾기 완료 콜백을 등록할 델리게이트
+	FSearchSignature onSearchCompleted;
+
 	
 
 };
