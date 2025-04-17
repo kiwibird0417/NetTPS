@@ -95,5 +95,13 @@ public:
 	UFUNCTION()
 	void OnClickedFindSession();
 
+	// 방찾기 상태 이벤트 콜백
+	UFUNCTION()
+	void OnChangeButtonEnable(bool bIsSearching);
+
+	// 검색 중 메시지
+	UPROPERTY(BlueprintReadOnly, meta=(BindWidget))
+	class UTextBlock* txt_findingMsg;
+
 
 };

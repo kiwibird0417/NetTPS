@@ -22,6 +22,8 @@ void ULoginWidget::NativeConstruct()
 	// NetGameInstance 쪽을 살펴보면 됨! Good~
 	gi->onSearchCompleted.AddDynamic(this, &ULoginWidget::AddSlotWidget);
 
+	gi->onSearchState.AddDynamic(this, &ULoginWidget::OnChangeButtonEnable);
+
 	//--------------------------------------------------------------------------
 	btn_createRoom->OnClicked.AddDynamic(this, &ULoginWidget::CreateRoom);
 	slider_playerCount->OnValueChanged.AddDynamic(this, &ULoginWidget::OnValueChanged);
@@ -66,6 +68,7 @@ void ULoginWidget::SwitchCreatePanel()
 void ULoginWidget::SwitchFindPanel()
 {
 	WidgetSwitcher->SetActiveWidgetIndex(2);
+	OnClickedFindSession();
 }
 
 void ULoginWidget::BacktoMain()
@@ -90,6 +93,20 @@ void ULoginWidget::OnClickedFindSession()
 
 	if (gi != nullptr) {
 		gi->FindOtherSession();
+	}
+}
+
+void ULoginWidget::OnChangeButtonEnable(bool bIsSearching)
+{
+	btn_find->SetIsEnabled(!bIsSearching);
+
+	if (bIsSearching == true) {
+		// 검색 중 보이도록 처리
+		txt_findingMsg->SetVisibility(ESlateVisibility::Visible);
+	}
+	else {
+		// 검색 중 사라지도록 처리
+		txt_findingMsg->SetVisibility(ESlateVisibility::Hidden);
 	}
 }
 

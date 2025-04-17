@@ -109,6 +109,11 @@ void UNetGameInstance::OnCreateSessionComplete(FName SessionName, bool bWasSucce
 //0415(화)
 void UNetGameInstance::FindOtherSession()
 {
+	//시작하자마자 막기!
+	onSearchState.Broadcast(true);
+
+
+	//--------------------------------------------------------
 	sessionSearch = MakeShareable(new FOnlineSessionSearch());
 
 	// 1. 세션
@@ -130,6 +135,9 @@ void UNetGameInstance::OnFindSessionsComplete(bool bWasSuccessful)
 {
 	// 찾기 실패 시
 	if (bWasSuccessful == false) {
+		
+		onSearchState.Broadcast(false);
+
 		PRINTLOG(TEXT("Session search failed"));
 		return;
 	}
@@ -186,6 +194,10 @@ void UNetGameInstance::OnFindSessionsComplete(bool bWasSuccessful)
 		onSearchCompleted.Broadcast(sessionInfo);
 
 	}
+
+	// 더안전하게 막기 ( 프로세스 다 실행 이후, 버튼 막았던 거 취소하기)
+	// 여러 번 반복해서 클릭하지 않게...
+	onSearchState.Broadcast(false);
 
 	/*
 	// 정보를 가져온다
