@@ -50,7 +50,12 @@ void UNetGameInstance::Init()
 		//	), 
 		//	2.0f, false
 		//);	
+			//----------------------------------------------------------------------
 	
+
+		//---------------------------------------------------------------------
+		//0418(금)
+			sessionInterface->OnJoinSessionCompleteDelegates.AddUObject(this, &UNetGameInstance::OnJoinSessionComplete);
 	
 	}
 }
@@ -103,6 +108,10 @@ void UNetGameInstance::CreateMySession(FString roomName, int32 playerCount)
 void UNetGameInstance::OnCreateSessionComplete(FName SessionName, bool bWasSuccessful)
 {
 	PRINTLOG(TEXT("SessionName : %s, bWasSuccessful : %d"), *SessionName.ToString(), bWasSuccessful);
+
+	if (bWasSuccessful == true) {
+		GetWorld()->ServerTravel(TEXT("/Game/Net/Maps/BattleMap?listen"));
+	}
 }
 
 //===================================================================================
@@ -269,3 +278,43 @@ FString UNetGameInstance::StringBase64Decode(const FString& str)
 */
 
 //===================================================================================
+//0418(금)
+void UNetGameInstance::JoinSelectedSession(int32 index)
+{
+	auto sr = sessionSearch->SearchResults;
+
+	// 이건 현재 언리얼 버그
+	sr[index].Session.SessionSettings.bUseLobbiesIfAvailable = true;
+	sr[index].Session.SessionSettings.bUsesPresence = true;
+
+	sessionInterface->JoinSession(0, FName(mySessionName), sr[index]);
+}
+
+void UNetGameInstance::OnJoinSessionComplete(FName sessionName, EOnJoinSessionCompleteResult::Type result)
+{
+	if (result == EOnJoinSessionCompleteResult::Success) 
+	{
+		auto pc = GetWorld()->GetFirstPlayerController();
+
+
+		FString url;
+		sessionInterface->GetResolvedConnectString(sessionName, url);
+
+		PRINTLOG(TEXT("Join URL : %s"), *url);
+
+		if (url.IsEmpty() == false) 
+		{
+			// Travel_absolute : 다 버리고 새로 갱신
+			// travel_Relative : 이전 정보를 들고 넘어감(파티 정보 같은 거 유지)
+			pc->ClientTravel(url, ETravelType::TRAVEL_Absolute);
+		}
+
+	}
+	else 
+	{
+		PRINTLOG(TEXT("Join Session failed : %d"), result);
+	}
+}
+
+//===================================================================================
+

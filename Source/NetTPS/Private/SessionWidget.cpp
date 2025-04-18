@@ -4,6 +4,7 @@
 #include "SessionWidget.h"
 #include "Components/TextBlock.h"
 #include "NetGameInstance.h"
+#include "Components/Button.h"
 
 void USessionWidget::Set(const struct FSessionInfo& sessionInfo)
 {
@@ -27,4 +28,22 @@ void USessionWidget::Set(const struct FSessionInfo& sessionInfo)
 
 	sessionNumber = sessionInfo.index;
 
+}
+
+//===========================================================
+//0418(금)
+void USessionWidget::NativeConstruct()
+{
+	Super::NativeConstruct();
+
+	btn_join->OnClicked.AddDynamic(this, &USessionWidget::JoinSession);
+}
+
+void USessionWidget::JoinSession()
+{
+	auto gi = Cast<UNetGameInstance>(GetWorld()->GetGameInstance());
+
+	if (gi) {
+		gi->JoinSelectedSession(sessionNumber);
+	}
 }

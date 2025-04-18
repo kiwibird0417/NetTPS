@@ -93,6 +93,14 @@ public:
 
 	// 방 찾기 상태 콜백 델리게이트
 	FSearchStateSignature onSearchState;
+
+//=======================================================
+//0418(금)
+	// 세션(방) 입장
+	void JoinSelectedSession(int32 index);
 	
+	// 세션 입장 콜백
+	void OnJoinSessionComplete(FName sessionName, EOnJoinSessionCompleteResult::Type result);
+
 
 };

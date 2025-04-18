@@ -35,7 +35,16 @@ public:
 	void Set(const struct FSessionInfo& sessionInfo);
 
 
+//---------------------------------------------------
+// 0418(금)
+	// 세션 조인
+	UPROPERTY(BlueprintReadWrite, meta=(BindWidget))
+	class UButton* btn_join;
 
+	virtual void NativeConstruct() override;
+
+	UFUNCTION()
+	void JoinSession();
 
 //---------------------------------------------------
 
